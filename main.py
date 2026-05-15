@@ -1,31 +1,32 @@
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
-from openai import OpenAI
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# 🔑 Replit Secrets ichida shu nom bilan qo'y:
+# TELEGRAM_BOT_TOKEN
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
+if not TOKEN:
+    print("❌ TOKEN topilmadi! Secrets tekshir!")
+    exit()
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[
-            {"role": "user", "content": text}
-        ]
-    )
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("START ishladi")
+    await update.message.reply_text("Bot ishlayapti ✅")
 
-    answer = response.choices[0].message.content
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("MESSAGE:", update.message.text)
+    await update.message.reply_text(f"Siz yozdingiz: {update.message.text}")
 
-    await update.message.reply_text(answer)
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
 
-app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-app.add_handler(MessageHandler(filters.TEXT, chat))
+    print("🤖 Bot ishga tushdi...")
+    app.run_polling()
 
-print("Bot ishga tushdi...")
-
-app.run_polling()
+if __name__ == "__main__":
+    main()
